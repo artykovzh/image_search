@@ -7,3 +7,4 @@ numpy
 scikit-learn
 inference_sdk
 requests
+opencv-python-headless==4.9.0.80   # вместо opencv-python или зависимости по умолчанию
