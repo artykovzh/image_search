@@ -1,0 +1,6 @@
+streamlit==1.33.0
+tensorflow==2.13.0
+Pillow
+scikit-learn
+faiss-cpu==1.7.4
+inference  # это SDK от Roboflow
