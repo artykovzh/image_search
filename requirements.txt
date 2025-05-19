@@ -1,11 +1,7 @@
-faiss_cpu==1.11.0
-inference==0.49.2
-inference_sdk==0.49.2
+streamlit
+opencv-python-headless
 numpy
-pandas==2.2.3
-Pillow==11.2.1
-Requests==2.32.3
-scikit_learn==1.6.1
-streamlit==1.45.1
-streamlit_authenticator==0.2.2
-tensorflow==2.19.0
+pandas
+scikit-learn
+tensorflow
+inference-sdk
