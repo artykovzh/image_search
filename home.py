@@ -19,7 +19,7 @@ from sklearn.preprocessing import normalize
 from inference_sdk import InferenceHTTPClient
 from embedding_utils import resize_with_padding, compute_md5
 
-ROBOFLOW_API_KEY = "8KcxEHxuAPdwBvTgIkEQ"
+ROBOFLOW_API_KEY = "3Jn35yGzmMoxqk8WotKx"
 ROBOFLOW_MODEL_ID = "bro-wg6vn/3"
 rf_client = InferenceHTTPClient(api_url="https://serverless.roboflow.com", api_key=ROBOFLOW_API_KEY)
 
