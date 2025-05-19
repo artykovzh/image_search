@@ -5,7 +5,6 @@ DB_PATH = os.path.join(
     "my_database.db"
 )
 
-# ---------- helpers ----------
 def _ensure_column(cur, name: str, definition: str):
     cur.execute("PRAGMA table_info(images)")
     if name not in [c[1] for c in cur.fetchall()]:
@@ -15,7 +14,6 @@ def _ensure_indexes(cur):
     cur.execute("CREATE INDEX IF NOT EXISTS idx_product_id ON images (product_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_photo_idx  ON images (photo_idx)")
 
-# ---------- создание таблицы ----------
 def create_table():
     with sqlite3.connect(DB_PATH) as con:
         cur = con.cursor()
@@ -43,7 +41,6 @@ def create_table():
 
 create_table()
 
-# ---------- CRUD ----------
 def insert_image(
     path: str,
     link: str,
