@@ -1,5 +1,5 @@
 streamlit>=1.34
-streamlit-authenticator==0.3.2
+streamlit-authenticator      # фиксируем
 tensorflow==2.15.0           # CPU-версия, Cloud её тянет
 faiss-cpu==1.8.0             # обязательно *faiss-cpu*, а не faiss
 pillow
