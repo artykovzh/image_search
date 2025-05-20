@@ -17,8 +17,10 @@ from tensorflow.keras.layers import GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from sklearn.preprocessing import normalize
 from inference_sdk import InferenceHTTPClient
+import requests
 from embedding_utils import resize_with_padding, compute_md5
 
+# === Константы ===
 ROBOFLOW_API_KEY = "3Jn35yGzmMoxqk8WotKx"
 ROBOFLOW_MODEL_ID = "bro-wg6vn/3"
 rf_client = InferenceHTTPClient(api_url="https://serverless.roboflow.com", api_key=ROBOFLOW_API_KEY)
@@ -31,11 +33,13 @@ INDEX_PATH = os.path.join(DATA_FOLDER, "efficientnet_index.faiss")
 META_PATH  = os.path.join(DATA_FOLDER, "efficientnet_meta.pkl")
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
+
 @st.cache_resource(show_spinner=False)
 def build_extractor():
     base = EfficientNetB4(weights="imagenet", include_top=False)
     return Model(base.input, GlobalAveragePooling2D()(base.output))
 extractor = build_extractor()
+
 
 def get_embedding(pil_img):
     img = resize_with_padding(pil_img.convert("RGB"), target_size=(380, 380))
@@ -43,20 +47,32 @@ def get_embedding(pil_img):
     emb = extractor.predict(arr, verbose=0)[0].astype("float32")
     return normalize(emb.reshape(1, -1))[0]
 
+
 def get_bbox_roboflow(pil_img):
     img_hash = compute_md5(pil_img)
     cache_path = os.path.join(CACHE_FOLDER, f"{img_hash}.pkl")
 
-    # Если кэш есть — читаем из файла
+    # Чтение из кэша
     if os.path.exists(cache_path):
         with open(cache_path, "rb") as f:
             return pickle.load(f)
 
-    # Иначе делаем запрос
+    # Запрос к Roboflow
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=True) as tmp:
         pil_img.save(tmp, format="JPEG")
         tmp.flush()
-        result = rf_client.infer(tmp.name, model_id=ROBOFLOW_MODEL_ID)
+        try:
+            st.info("🔍 Выполняется распознавание объекта через Roboflow...")
+            result = rf_client.infer(tmp.name, model_id=ROBOFLOW_MODEL_ID)
+        except requests.exceptions.Timeout:
+            st.error("⏱ Roboflow не ответил вовремя. Попробуйте позже.")
+            return [], {}
+        except requests.exceptions.ConnectionError:
+            st.error("🚫 Не удалось подключиться к Roboflow. Проверьте соединение.")
+            return [], {}
+        except Exception as e:
+            st.error(f"⚠️ Ошибка Roboflow: {e}")
+            return [], {}
 
     preds = result.get("predictions", [])
     boxes = []
@@ -68,11 +84,11 @@ def get_bbox_roboflow(pil_img):
         x2, y2 = min(pil_img.width, x2), min(pil_img.height, y2)
         boxes.append(((x1, y1, x2, y2), pred))
 
-    # Сохраняем в кэш
     with open(cache_path, "wb") as f:
         pickle.dump((boxes, result), f)
 
     return boxes, result
+
 
 def load_index_and_meta():
     if not os.path.exists(INDEX_PATH) or not os.path.exists(META_PATH):
@@ -81,6 +97,7 @@ def load_index_and_meta():
     with open(META_PATH, "rb") as f:
         meta = pickle.load(f)
     return index, meta
+
 
 def main():
     st.title("🔍 Поиск похожих товаров по фото")
@@ -140,8 +157,7 @@ def main():
         st.warning("Нет данных для поиска. Загрузите изображения в админке для создания базы.")
         st.stop()
 
-    index.hnsw.efSearch = 32  # Устанавливаем параметр поиска
-
+    index.hnsw.efSearch = 32
     scores, indices = index.search(q_emb.astype("float32"), 100)
 
     st.subheader(f"🎯 Похожие товары")
@@ -152,7 +168,6 @@ def main():
         if idx >= len(meta):
             continue
         img_id, path, link, title, pid = meta[idx]
-
         if pid in shown_pids:
             continue
         shown_pids.add(pid)
@@ -180,6 +195,7 @@ def main():
                     st.write(f"**{title}**")
                 if link:
                     st.markdown(f"[Ссылка на товар]({link})")
+
 
 if __name__ == "__main__":
     main()
