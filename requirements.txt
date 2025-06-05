@@ -5,6 +5,6 @@ faiss-cpu==1.8.0             # обязательно *faiss-cpu*, а не faiss
 pillow
 numpy
 scikit-learn
-inference-sdk>=0.50.0
+inference-sdk
 requests
 opencv-python-headless==4.9.0.80   # вместо opencv-python или зависимости по умолчанию
