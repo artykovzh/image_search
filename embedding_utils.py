@@ -36,4 +36,3 @@ def compute_md5(pil_img):
     with pil_img.convert("RGB") as img:
         arr = np.array(img)
         return hashlib.md5(arr.tobytes()).hexdigest()
-        
